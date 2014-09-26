@@ -1,6 +1,0 @@
-C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDown\bin\Debug\SpracheDown.dll
-C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDown\bin\Debug\SpracheDown.pdb
-C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDown\bin\Debug\Sprache.dll
-C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDown\obj\Debug\SpracheDown.csprojResolveAssemblyReference.cache
-C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDown\obj\Debug\SpracheDown.dll
-C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDown\obj\Debug\SpracheDown.pdb
