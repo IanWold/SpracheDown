@@ -12,8 +12,6 @@ namespace SpracheDownTest
             var toParse = reader.ReadToEnd();
             reader.Close();
 
-            var n = toParse.ToCharArray();
-
             var Parsed = MarkdownParser.ParseDocument(toParse);
 
             var writer = new StreamWriter("ParsedFile.html");
