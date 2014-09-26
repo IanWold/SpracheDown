@@ -1,0 +1,10 @@
+C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDownTest\obj\Debug\SpracheDownTest.csprojResolveAssemblyReference.cache
+C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDownTest\bin\Debug\SpracheDownTest.exe.config
+C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDownTest\bin\Debug\SpracheDownTest.exe
+C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDownTest\bin\Debug\SpracheDownTest.pdb
+C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDownTest\bin\Debug\SpracheDown.dll
+C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDownTest\bin\Debug\Sprache.dll
+C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDownTest\bin\Debug\SpracheDown.pdb
+C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDownTest\obj\Debug\SpracheDownTest.exe
+C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDownTest\obj\Debug\SpracheDownTest.pdb
+C:\Users\Ian\Documents\GitHub\SpracheDown\SpracheDownTest\bin\Debug\TestFile.md
