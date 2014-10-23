@@ -7,53 +7,6 @@ using System.Threading.Tasks;
 namespace SpracheDown
 {
     /// <summary>
-    /// Represents a document.
-    /// </summary>
-    public class HTMLDocument
-    {
-        /// <summary>
-        /// The root node of the document.
-        /// </summary>
-        public HTMLNode Root { get; set; }
-
-        public HTMLDocument() { }
-
-        public HTMLDocument(HTMLNode root)
-        {
-            Root = root;
-        }
-
-        public override string ToString()
-        {
-            return Root.ToString();
-        }
-    }
-
-    /// <summary>
-    /// Either a node (tag) or content (a string).
-    /// </summary>
-    public class HTMLItem { }
-
-    /// <summary>
-    /// Represents plaintext in HTML.
-    /// </summary>
-    public class HTMLContent : HTMLItem
-    {
-        public string Text { get; set; }
-
-        public HTMLContent() { }
-
-        public HTMLContent(string text)
-        {
-            Text = text;
-        }
-        public override string ToString()
-        {
-            return Text;
-        }
-    }
-
-    /// <summary>
     /// Represents an HTML node (or tag).
     /// </summary>
     public class HTMLNode : HTMLItem
@@ -195,40 +148,6 @@ namespace SpracheDown
             else toReturn = "<" + Name + "/>";
 
             return toReturn;
-        }
-    }
-
-    /// <summary>
-    /// An attribute for an HTML tag.
-    /// </summary>
-    public class HTMLAttribute
-    {
-        /// <summary>
-        /// The name of the attribute.
-        /// </summary>
-        public string Name { get; set; }
-        /// <summary>
-        /// The value to which the attribute is set.
-        /// </summary>
-        public string Value { get; set; }
-
-        public HTMLAttribute() { }
-
-        public HTMLAttribute(string name, string value)
-        {
-            Name = name;
-            Value = value;
-        }
-
-        /// <summary>
-        /// Returns a string representing the attribute, to be inserted in an HTML tag.
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            if ((Name != "" && Name != null) &&
-                (Value != "" && Value != null)) return Name + "=\"" + Value + "\"";
-            else return "";
         }
     }
 }

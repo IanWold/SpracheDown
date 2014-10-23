@@ -43,7 +43,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="MarkdownParser.cs" />
-    <Compile Include="SyntaxTree.cs" />
+    <Compile Include="Syntax Tree\HTMLContent.cs" />
+    <Compile Include="Syntax Tree\HTMLNode.cs" />
+    <Compile Include="Syntax Tree\HTMLAttribute.cs" />
+    <Compile Include="Syntax Tree\HTMLItem.cs" />
+    <Compile Include="Syntax Tree\HTMLDocument.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

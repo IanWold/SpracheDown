@@ -311,14 +311,59 @@ namespace SpracheDown
             return toReturn;
         }
 
+        static readonly Parser<string> Identifier =
+            from first in Parse.Letter.Once()
+            from rest in Parse.LetterOrDigit.XOr(Parse.Char('-')).XOr(Parse.Char('_')).Many()
+            select new string(first.Concat(rest).ToArray());
+
+        static Parser<T> Tag<T>(Parser<T> content)
+        {
+            return from lt in Parse.Char('<')
+                   from t in content
+                   from gt in Parse.Char('>').Token()
+                   select t;
+        }
+
+        static readonly Parser<string> BeginTag = Tag(Identifier);
+
+        static Parser<string> EndTag(string name)
+        {
+            return Tag(from slash in Parse.Char('/')
+                       from id in Identifier
+                       where id == name
+                       select id).Named("closing tag for " + name);
+        }
+
+        static readonly Parser<HTMLContent> Content =
+            from chars in Parse.CharExcept('<').Many()
+            select new HTMLContent(new string(chars.ToArray()));
+
+        static readonly Parser<HTMLNode> FullNode =
+            from tag in BeginTag
+            from nodes in Parse.Ref(() => Item).Many()
+            from end in EndTag(tag)
+            select new HTMLNode(tag, nodes);
+
+        static readonly Parser<HTMLNode> ShortNode = Tag(from id in Identifier
+                                                     from slash in Parse.Char('/')
+                                                     select new HTMLNode(id));
+
+        static readonly Parser<HTMLNode> HtmlNode = ShortNode.Or(FullNode);
+
+        static readonly Parser<HTMLItem> Item = HtmlNode.Select(n => (HTMLItem)n).XOr(Content);
+
         /// <summary>
         /// Parses a single MarkDown term.
         /// </summary>
-        static readonly Parser<HTMLItem> MDTerm = Header.Or(MDList).Or(BlockQuote).Or(CodeBlock).Or(Paragraph);
+        static readonly Parser<HTMLItem> MDTerm = Header.Or(MDList).Or(BlockQuote).Or(CodeBlock).Or(HtmlNode).Or(Paragraph);
 
         /// <summary>
         /// Parses a list of MarkDown terms, separated by two newlines each.
         /// </summary>
-        static readonly Parser<IEnumerable<HTMLItem>> TermList = MDTerm.DelimitedBy(Parse.String("\r\n\r\n")).End();
+        static readonly Parser<IEnumerable<HTMLItem>> TermList =
+            from first in Parse.WhiteSpace.Many().Optional()
+            from terms in MDTerm.DelimitedBy(Parse.String("\r\n\r\n"))
+            from rest in Parse.WhiteSpace.Many().Optional().End()
+            select terms;
     }
 }
