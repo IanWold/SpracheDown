@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SpracheDown
 {
@@ -30,10 +27,8 @@ namespace SpracheDown
         /// 
         /// </summary>
         /// <param name="name">The name of the node.</param>
-        public HTMLNode(string name)
-        {
+        public HTMLNode(string name) =>
             Name = name;
-        }
 
         /// <summary>
         /// 
@@ -75,7 +70,7 @@ namespace SpracheDown
         }
 
         /// <summary>
-        /// This sorts through all the elements in Children, and combines together any HTMLContent items into coherent HTMLContent items.
+        /// Sort through all the elements in Children, and combine any sequential HTMLContent items into single HTMLContent items.
         /// </summary>
         void SortChildren()
         {
@@ -83,16 +78,19 @@ namespace SpracheDown
 
             foreach (var c in Children)
             {
-                if (c.GetType().Equals(this.GetType())) sortList.Add(c);
+                if (sortList.Count == 0
+                    || c.GetType().Equals(GetType())
+                    || sortList.ElementAt(sortList.Count - 1).GetType().Equals(GetType()))
+                {
+                    sortList.Add(c);
+                }
                 else
                 {
-                    if (sortList.Count == 0) sortList.Add(c);
-                    else if (sortList.ElementAt(sortList.Count - 1).GetType().Equals(this.GetType())) sortList.Add(c);
-                    else (sortList.ElementAt(sortList.Count - 1) as HTMLContent).Text += (c as HTMLContent).Text;
+                    (sortList.ElementAt(sortList.Count - 1) as HTMLContent).Text += (c as HTMLContent).Text;
                 }
             }
 
-            Children = sortList as IEnumerable<HTMLItem>;
+            Children = sortList;
         }
 
         /// <summary>
@@ -102,6 +100,7 @@ namespace SpracheDown
         string GetAttributes()
         {
             var toReturn = "";
+
             if (Attributes != null)
             {
                 foreach (var a in Attributes)
@@ -109,6 +108,7 @@ namespace SpracheDown
                     if (a.ToString() != "") toReturn += " " + a.ToString();
                 }
             }
+
             return toReturn;
         }
 
@@ -122,7 +122,10 @@ namespace SpracheDown
             var lines = toTab.Split('\n');
             var toReturn = "";
 
-            foreach (var l in lines) toReturn += l + "\n" + "\t";
+            foreach (var l in lines)
+            {
+                toReturn += l + "\n" + "\t";
+            }
 
             return toReturn.Substring(0, toReturn.Length - 2);
         }
@@ -138,14 +141,18 @@ namespace SpracheDown
             if (Children != null)
             {
                 toReturn += "<" + Name + GetAttributes() + ">";
-                foreach (var c in Children) toReturn += "\r\n" + "\t" + Tabify(c.ToString());
+                foreach (var c in Children)
+                {
+                    toReturn += "\r\n" + "\t" + Tabify(c.ToString());
+                }
                 toReturn += "\r\n" + "</" + Name + ">";
             }
-            else if (Attributes != null)
+            else
             {
-                toReturn = "<" + Name + GetAttributes() + "/>";
+                toReturn = Attributes != null
+                    ? "<" + Name + GetAttributes() + "/>"
+                    : toReturn = "<" + Name + "/>";
             }
-            else toReturn = "<" + Name + "/>";
 
             return toReturn;
         }

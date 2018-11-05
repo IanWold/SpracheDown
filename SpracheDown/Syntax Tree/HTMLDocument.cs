@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SpracheDown
+﻿namespace SpracheDown
 {
     /// <summary>
     /// Represents a document.
@@ -18,14 +12,10 @@ namespace SpracheDown
 
         public HTMLDocument() { }
 
-        public HTMLDocument(HTMLNode root)
-        {
+        public HTMLDocument(HTMLNode root) =>
             Root = root;
-        }
 
-        public override string ToString()
-        {
-            return Root.ToString();
-        }
+        public override string ToString() =>
+            Root.ToString();
     }
 }

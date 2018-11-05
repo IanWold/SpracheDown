@@ -8,19 +8,19 @@ namespace SpracheDownTest
     {
         static void Main(string[] args)
         {
-            var reader = new StreamReader("TestFile.md");
-            var toParse = reader.ReadToEnd();
-            reader.Close();
+            string toParse;
+
+            using (var reader = new StreamReader("TestFile.md"))
+            {
+                toParse = reader.ReadToEnd();
+            }
 
             var Parsed = MarkdownParser.ParseDocument(toParse);
 
-            var writer = new StreamWriter("ParsedFile.html");
-            writer.Write(Parsed.ToString());
-            writer.Close();
-
-            Console.WriteLine("Parse successful!");
-
-            Console.ReadLine();
+            using (var writer = new StreamWriter("ParsedFile.html"))
+            {
+                writer.Write(Parsed.ToString());
+            }
         }
     }
 }

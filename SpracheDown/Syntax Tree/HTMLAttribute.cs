@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SpracheDown
+﻿namespace SpracheDown
 {
     /// <summary>
     /// An attribute for an HTML tag.
@@ -15,6 +9,7 @@ namespace SpracheDown
         /// The name of the attribute.
         /// </summary>
         public string Name { get; set; }
+
         /// <summary>
         /// The value to which the attribute is set.
         /// </summary>
@@ -32,11 +27,9 @@ namespace SpracheDown
         /// Returns a string representing the attribute, to be inserted in an HTML tag.
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
-        {
-            if ((Name != "" && Name != null) &&
-                (Value != "" && Value != null)) return Name + "=\"" + Value + "\"";
-            else return "";
-        }
+        public override string ToString() =>
+            !(string.IsNullOrEmpty(Name) || string.IsNullOrEmpty(Value))
+                ? Name + "=\"" + Value + "\""
+                : "";
     }
 }

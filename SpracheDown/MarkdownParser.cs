@@ -1,10 +1,6 @@
-﻿using System;
+﻿using Sprache;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Sprache;
-using System.Collections.ObjectModel;
 
 namespace SpracheDown
 {
@@ -239,7 +235,7 @@ namespace SpracheDown
         /// <summary>
         /// Calculates the nesting of a list.
         /// </summary>
-        /// <param name="toNest">The base HTMLItem to be nested.</param>
+        /// <param name="toNest">The base IHTMLItem to be nested.</param>
         /// <param name="nestName">The name of the nodes into which toNest should be nested.</param>
         /// <param name="nestCount">The degree to which toNest should be nested.</param>
         /// <returns>An HTMLNode representing the nested list item.</returns>
@@ -345,8 +341,8 @@ namespace SpracheDown
             select new HTMLNode(tag, nodes);
 
         static readonly Parser<HTMLNode> ShortNode = Tag(from id in Identifier
-                                                     from slash in Parse.Char('/')
-                                                     select new HTMLNode(id));
+                                                         from slash in Parse.Char('/')
+                                                         select new HTMLNode(id));
 
         static readonly Parser<HTMLNode> HtmlNode = ShortNode.Or(FullNode);
 
