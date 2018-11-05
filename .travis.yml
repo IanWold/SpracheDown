@@ -1,7 +1,6 @@
 language: csharp
 solution: SpracheDown.sln
 mono: none
-dotnet: 1.0.1
-dist: trusty
+dotnet: 2.1.403
 script:
- - dotnet restore
+    - dotnet restore
