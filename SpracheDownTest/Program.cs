@@ -1,6 +1,5 @@
-﻿using System;
+﻿using SpracheDown;
 using System.IO;
-using SpracheDown;
 
 namespace SpracheDownTest
 {

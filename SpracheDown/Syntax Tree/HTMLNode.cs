@@ -6,7 +6,7 @@ namespace SpracheDown
     /// <summary>
     /// Represents an HTML node (or tag).
     /// </summary>
-    public class HTMLNode : HTMLItem
+    public class HtmlNode : IHtmlItem
     {
         /// <summary>
         /// The name of the tag.
@@ -16,43 +16,42 @@ namespace SpracheDown
         /// <summary>
         /// The attributes of the tag, if any.
         /// </summary>
-        public IEnumerable<HTMLAttribute> Attributes { get; set; }
+        public Dictionary<string, string> Attributes { get; set; }
 
         /// <summary>
         /// All the children HTMLItems of the node. Can be a mixture of content and nodes.
         /// </summary>
-        public IEnumerable<HTMLItem> Children { get; set; }
+        public IEnumerable<IHtmlItem> Children { get; set; }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="name">The name of the node.</param>
-        public HTMLNode(string name) =>
-            Name = name;
+        public HtmlNode(string name)
+            : this(name, new List<IHtmlItem>(), new Dictionary<string, string>())
+        { }
+
+        public HtmlNode(string name, IHtmlItem child)
+            : this(name, new List<IHtmlItem> { child }, new Dictionary<string, string>())
+        { }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="name">The name of the node.</param>
         /// <param name="children">The children of the node.</param>
-        public HTMLNode(string name, params HTMLItem[] children)
-        {
-            Name = name;
-            Children = children;
-
-            SortChildren();
-        }
+        public HtmlNode(string name, IEnumerable<IHtmlItem> children)
+            : this(name, children, new Dictionary<string, string>())
+        { }
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="name">The name of the node.</param>
         /// <param name="attributes">The attributes of the node.</param>
-        public HTMLNode(string name, params HTMLAttribute[] attributes)
-        {
-            Name = name;
-            Attributes = attributes;
-        }
+        public HtmlNode(string name, Dictionary<string, string> attributes)
+            : this(name, new List<IHtmlItem>(), attributes)
+        { }
 
         /// <summary>
         /// 
@@ -60,7 +59,7 @@ namespace SpracheDown
         /// <param name="name">The name of the node.</param>
         /// <param name="children">The children of the node.</param>
         /// <param name="attributes">The attributes of the node (null by default).</param>
-        public HTMLNode(string name, IEnumerable<HTMLItem> children, IEnumerable<HTMLAttribute> attributes = null)
+        public HtmlNode(string name, IEnumerable<IHtmlItem> children, Dictionary<string, string> attributes)
         {
             Name = name;
             Children = children;
@@ -70,23 +69,24 @@ namespace SpracheDown
         }
 
         /// <summary>
-        /// Sort through all the elements in Children, and combine any sequential HTMLContent items into single HTMLContent items.
+        /// Sort through all the elements in Children, and combine any sequential HtmlValue items into single HtmlValue items.
         /// </summary>
         void SortChildren()
         {
-            var sortList = new List<HTMLItem>();
+            var sortList = new List<IHtmlItem>();
 
             foreach (var c in Children)
             {
                 if (sortList.Count == 0
-                    || c.GetType().Equals(GetType())
-                    || sortList.ElementAt(sortList.Count - 1).GetType().Equals(GetType()))
+                    || c is HtmlNode
+                    || sortList.ElementAt(sortList.Count - 1) is HtmlNode)
                 {
                     sortList.Add(c);
                 }
-                else
+                else if (c is HtmlValue currentValue
+                    && sortList.ElementAt(sortList.Count - 1) is HtmlValue nextValue)
                 {
-                    (sortList.ElementAt(sortList.Count - 1) as HTMLContent).Text += (c as HTMLContent).Text;
+                    nextValue.Value += currentValue.Value;
                 }
             }
 

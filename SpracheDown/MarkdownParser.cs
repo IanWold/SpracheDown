@@ -7,25 +7,24 @@ namespace SpracheDown
     public static class MarkdownParser
     {
         /// <summary>
-        /// Parse markdown text into an HTMLDocument.
+        /// Parse markdown text into an HtmlNode.
         /// </summary>
         /// <param name="toParse">The string (markdown text) to be parsed.</param>
-        /// <returns>An HTMLDocument representing the output HTML.</returns>
-        public static HTMLDocument ParseDocument(string toParse)
+        /// <returns>An HtmlNode representing the output HTML.</returns>
+        public static HtmlNode ParseDocument(string toParse)
         {
-            return new HTMLDocument(
-                new HTMLNode("html", new HTMLNode("head"), ParseBody(toParse))
-                );
+            return new HtmlNode("html", new List<IHtmlItem>() { new HtmlNode("head"), ParseBody(toParse) });
+
         }
 
         /// <summary>
         /// Parse markdown text into a single HTML body node.
         /// </summary>
         /// <param name="toParse">The string (markdown text) to be parsed.</param>
-        /// <returns>Returns an HTMLNode representing the output HTML body node.</returns>
-        public static HTMLNode ParseBody(string toParse)
+        /// <returns>Returns an HtmlNode representing the output HTML body node.</returns>
+        public static HtmlNode ParseBody(string toParse)
         {
-            return new HTMLNode("body", TermList.Parse(toParse));
+            return new HtmlNode("body", TermList.Parse(toParse));
         }
 
         /// <summary>
@@ -43,52 +42,52 @@ namespace SpracheDown
         /// A parser which parses plain text - any character(s) except those which are specified.
         /// </summary>
         /// <param name="except">The character(s) the parser cannot encounter.</param>
-        /// <returns>Returns an HTMLContent object representing the parsed text.</returns>
-        static Parser<HTMLItem> PlainText(Parser<char> except)
+        /// <returns>Returns an HtmlValue object representing the parsed text.</returns>
+        static Parser<IHtmlItem> PlainText(Parser<char> except)
         {
             return Parse.AnyChar.Except(except).AtLeastOnce().Text()
-                .Select(i => new HTMLContent(i));
+                .Select(i => new HtmlValue(i));
         }
 
         /// <summary>
         /// Parses a line break within a paragraph.
         /// It does not parse two consecutive line breaks, which signifies the input may contain a different element.
         /// </summary>
-        static readonly Parser<HTMLItem> LineBreak =
+        static readonly Parser<IHtmlItem> LineBreak =
             from line in Parse.String("\r\n").Except(Parse.String("\r\n\r\n"))
-            select new HTMLNode("br");
+            select new HtmlNode("br");
 
         /// <summary>
-        /// Parses emphasized text (see MarkDown specification).
+        /// Parses emphasized text.
         /// </summary>
-        static readonly Parser<HTMLItem> EmText =
+        static readonly Parser<IHtmlItem> EmText =
             from star1 in Parse.String("*").Or(Parse.String("_")).Text()
             from content in PlainText(RegularException)
             from star2 in star1 == "*" ? Parse.String("*") : Parse.String("_")
-            select new HTMLNode("em", content);
+            select new HtmlNode("em", content);
 
         /// <summary>
-        /// Parses strong text (see MarkDown specification).
+        /// Parses strong text.
         /// </summary>
-        static readonly Parser<HTMLItem> StrongText =
+        static readonly Parser<IHtmlItem> StrongText =
             from star1 in Parse.String("**").Or(Parse.String("__")).Text()
             from content in PlainText(RegularException)
             from star2 in star1 == "**" ? Parse.String("**") : Parse.String("__")
-            select new HTMLNode("strong", content);
+            select new HtmlNode("strong", content);
 
         /// <summary>
-        /// Parses inline code (see MarkDown specification).
+        /// Parses inline code.
         /// </summary>
-        static readonly Parser<HTMLItem> CodeText =
+        static readonly Parser<IHtmlItem> CodeText =
             from star1 in Parse.String("`")
             from content in PlainText(RegularException)
             from star2 in Parse.String("`")
-            select new HTMLNode("code", content);
+            select new HtmlNode("code", content);
 
         /// <summary>
-        /// Parses an inline image (see MarkDown specification).
+        /// Parses an inline image.
         /// </summary>
-        static readonly Parser<HTMLItem> MDInlineImage =
+        static readonly Parser<IHtmlItem> MDInlineImage =
             from exclaim in Parse.String("!")
             from lbracket in Parse.String("[")
             from text in Parse.AnyChar.Except(Parse.Char(']').Or(Parse.Char('\r'))).Many().Text()
@@ -96,13 +95,12 @@ namespace SpracheDown
             from lparen in Parse.String("(")
             from link in PlainText(Parse.Char(')').Or(Parse.Char('\r')).Or(Parse.Char('"')).Or(Parse.WhiteSpace))
             from rparen in Parse.String(")")
-            select new HTMLNode("img", new HTMLAttribute("alt", text), new HTMLAttribute("src", link.ToString()));
+            select new HtmlNode("img", new Dictionary<string, string> { { "alt", text }, { "src", link.ToString() } });
 
         /// <summary>
         /// Parses an inline link, which includes an optional title attribute.
-        /// This may not conform 100% to the MarkDown specification. Refer to TestFile.md.
         /// </summary>
-        static readonly Parser<HTMLItem> MDInlineLink =
+        static readonly Parser<IHtmlItem> MDInlineLink =
             from lbracket in Parse.String("[")
             from text in Parse.AnyChar.Except(Parse.Char(']').Or(Parse.Char('\r'))).Many().Text()
             from rbracket in Parse.String("]")
@@ -115,38 +113,26 @@ namespace SpracheDown
                  from rquote in Parse.String("\"")
                  select _text).Optional()
             from rparen in Parse.String(")")
-            select new HTMLNode("a",
-                                GetEnumerable(new HTMLContent(text)),
-                                GetEnumerable(new HTMLAttribute("href", link.ToString()),
-                                    (title.IsDefined ? new HTMLAttribute("title", title.Get()) : new HTMLAttribute())
-                                ));
-
-        /// <summary>
-        /// Accepts a series of objects as inputs, and returns them in one IEnumerable object.
-        /// </summary>
-        /// <typeparam name="T">The type of object.</typeparam>
-        /// <param name="objects">The list of objects of type T to be processed.</param>
-        /// <returns>Returns an IEnumerable containing the objects.</returns>
-        static IEnumerable<T> GetEnumerable<T>(params T[] objects)
-        {
-            var toReturn = new List<T>();
-            foreach (var o in objects) toReturn.Add(o);
-            return toReturn as IEnumerable<T>;
-        }
-
+            select new HtmlNode("a",
+                                new List<IHtmlItem> { new HtmlValue(text) },
+                                new Dictionary<string, string>
+                                {
+                                    { "href", link.ToString() },
+                                    { "title", title.GetOrDefault() }
+                                });
         /// <summary>
         /// Parses a single character which cannot be regularly parsed in plain text.
         /// Requires a backslash to precede the character.
         /// </summary>
-        static readonly Parser<HTMLItem> ForbiddenCharacter =
+        static readonly Parser<IHtmlItem> ForbiddenCharacter =
             from back in Parse.String("\\")
             from character in RegularException
-            select new HTMLContent(character.ToString());
+            select new HtmlValue(character.ToString());
 
         /// <summary>
         /// Parses any text which may be stylized by markdown, save for a line break.
         /// </summary>
-        static readonly Parser<HTMLItem> MajorFormattedText =
+        static readonly Parser<IHtmlItem> MajorFormattedText =
             ForbiddenCharacter
             .Or(StrongText)
             .Or(EmText)
@@ -158,39 +144,39 @@ namespace SpracheDown
         /// <summary>
         /// Parses any text which may be stylized by markdown, including the line break.
         /// </summary>
-        static readonly Parser<IEnumerable<HTMLItem>> FormattedText = LineBreak.Or(MajorFormattedText).Many();
+        static readonly Parser<IEnumerable<IHtmlItem>> FormattedText = LineBreak.Or(MajorFormattedText).Many();
 
         /// <summary>
         /// Parses FormattedText or an empty line into a paragraph node.
         /// </summary>
-        static readonly Parser<HTMLItem> Paragraph =
+        static readonly Parser<IHtmlItem> Paragraph =
             from items in FormattedText
-            select items.Count() != 0 ? new HTMLNode("p", items) : new HTMLNode("p");
+            select items.Count() != 0 ? new HtmlNode("p", items) : new HtmlNode("p");
 
         /// <summary>
         /// Parses a header denoted with "=" signs.
         /// </summary>
-        static readonly Parser<HTMLItem> Header1 =
+        static readonly Parser<IHtmlItem> Header1 =
             from text in Parse.AnyChar.Except(Parse.Char('\r')).AtLeastOnce().Text()
             from newline in Parse.String("\r\n")
             from lineBegin in Parse.String("==")
             from lineFinish in Parse.String("=").AtLeastOnce()
-            select new HTMLNode("h1", new HTMLContent(text));
+            select new HtmlNode("h1", new HtmlValue(text));
 
         /// <summary>
         /// Parses a header denoted with "-" signs.
         /// </summary>
-        static readonly Parser<HTMLItem> Header2 =
+        static readonly Parser<IHtmlItem> Header2 =
             from text in Parse.AnyChar.Except(Parse.Char('\r')).AtLeastOnce().Text()
             from newline in Parse.String("\r\n")
             from lineBegin in Parse.String("--")
             from lineFinish in Parse.String("-").AtLeastOnce()
-            select new HTMLNode("h2", new HTMLContent(text));
+            select new HtmlNode("h2", new HtmlValue(text));
 
         /// <summary>
         /// Parses any header denoted by using "#" signs.
         /// </summary>
-        static readonly Parser<HTMLItem> HashtagHeader =
+        static readonly Parser<IHtmlItem> HashtagHeader =
             from tags in Parse.String("######")
                          .Or(Parse.String("#####"))
                          .Or(Parse.String("####"))
@@ -198,22 +184,22 @@ namespace SpracheDown
                          .Or(Parse.String("##"))
                          .Or(Parse.String("#")).Text()
             from text in Parse.AnyChar.Except(Parse.Char('\r')).AtLeastOnce().Text()
-            select new HTMLNode("h" + tags.Length.ToString(), new HTMLContent(text));
+            select new HtmlNode("h" + tags.Length.ToString(), new HtmlValue(text));
 
         /// <summary>
         /// Parses any MarkDown header.
         /// </summary>
-        static readonly Parser<HTMLItem> Header = HashtagHeader.Or(Header1).Or(Header2);
+        static readonly Parser<IHtmlItem> Header = HashtagHeader.Or(Header1).Or(Header2);
 
         /// <summary>
-        /// Parses a "block" of code (see GitHub Flavored Markdown).
+        /// Parses a "block" of code.
         /// </summary>
-        static readonly Parser<HTMLNode> CodeBlock =
+        static readonly Parser<HtmlNode> CodeBlock =
             from first in Parse.String("```")
             from line in Parse.String("\r\n")
             from text in Parse.AnyChar.Except(Parse.String("```")).Many().Text()
             from last in Parse.String("```")
-            select new HTMLNode("code", new HTMLContent(text));
+            select new HtmlNode("code", new HtmlValue(text));
 
         /// <summary>
         /// Parses a custom list item. Flexible for parsing bulletted and numbered list items, including nested lists.
@@ -221,28 +207,28 @@ namespace SpracheDown
         /// <typeparam name="T">The type of the bullet parser.</typeparam>
         /// <param name="bullet">The parser which parses the bullet of the list.</param>
         /// <param name="nodeName">The name of the node any nested lists will be put into.</param>
-        /// <returns>Returns an HTML node representing the list item (or nested list) that was parsed.</returns>
-        static Parser<HTMLNode> MDListItem<T>(Parser<T> bullet, string nodeName)
+        /// <returns>Returns an HtmlNode representing the list item (or nested list) that was parsed.</returns>
+        static Parser<HtmlNode> MDListItem<T>(Parser<T> bullet, string nodeName)
         {
             return
                 from ws in Parse.Char(' ').Many()
                 from star in bullet
                 from space in Parse.Char(' ')
                 from text in Parse.AnyChar.Except(Parse.Char('\r')).AtLeastOnce().Text()
-                select GetNestedNode(new HTMLContent(text), nodeName, ws.Count());
+                select GetNestedNode(new HtmlValue(text), nodeName, ws.Count());
         }
 
         /// <summary>
         /// Calculates the nesting of a list.
         /// </summary>
-        /// <param name="toNest">The base IHTMLItem to be nested.</param>
+        /// <param name="toNest">The base IIHtmlItem to be nested.</param>
         /// <param name="nestName">The name of the nodes into which toNest should be nested.</param>
         /// <param name="nestCount">The degree to which toNest should be nested.</param>
-        /// <returns>An HTMLNode representing the nested list item.</returns>
-        static HTMLNode GetNestedNode(HTMLItem toNest, string nestName, int nestCount)
+        /// <returns>An HtmlNode representing the nested list item.</returns>
+        static HtmlNode GetNestedNode(IHtmlItem toNest, string nestName, int nestCount)
         {
-            if (nestCount == 0) return new HTMLNode("li", toNest);
-            else return new HTMLNode(nestName, GetNestedNode(toNest, nestName, nestCount - 1));
+            if (nestCount == 0) return new HtmlNode("li", toNest);
+            else return new HtmlNode(nestName, GetNestedNode(toNest, nestName, nestCount - 1));
         }
 
         /// <summary>
@@ -264,19 +250,19 @@ namespace SpracheDown
         /// <summary>
         /// Parses a bulletted list.
         /// </summary>
-        static readonly Parser<HTMLNode> MDBulletList =
-            MDListItem(ListBullet, "ul").DelimitedBy(Parse.String("\r\n").Once()).Select(i => new HTMLNode("ul", i));
+        static readonly Parser<HtmlNode> MDBulletList =
+            MDListItem(ListBullet, "ul").DelimitedBy(Parse.String("\r\n").Once()).Select(i => new HtmlNode("ul", i));
 
         /// <summary>
         /// Parses a numbered list.
         /// </summary>
-        static readonly Parser<HTMLNode> MDNumberList =
-            MDListItem(ListDigit, "ol").DelimitedBy(Parse.String("\r\n").Once()).Select(i => new HTMLNode("ol", i));
+        static readonly Parser<HtmlNode> MDNumberList =
+            MDListItem(ListDigit, "ol").DelimitedBy(Parse.String("\r\n").Once()).Select(i => new HtmlNode("ol", i));
 
         /// <summary>
         /// Parses any list.
         /// </summary>
-        static readonly Parser<HTMLNode> MDList = MDNumberList.XOr(MDBulletList);
+        static readonly Parser<HtmlNode> MDList = MDNumberList.XOr(MDBulletList);
 
         /// <summary>
         /// Parses one line of a blockquote.
@@ -290,9 +276,9 @@ namespace SpracheDown
         /// <summary>
         /// Parses an entire line of a blockquote, being sure to parse the contents within the blockquote as regular markdown.
         /// </summary>
-        static readonly Parser<HTMLNode> BlockQuote =
+        static readonly Parser<HtmlNode> BlockQuote =
             from lines in BlockQuoteLine.DelimitedBy(Parse.String("\r\n").Once())
-            select new HTMLNode("blockquote", TermList.Parse(GetConnectedString(lines, "\r\n")));
+            select new HtmlNode("blockquote", TermList.Parse(GetConnectedString(lines, "\r\n")));
 
         /// <summary>
         /// Accepts an IEnumerable of strings and returns one single string having concatenated them all.
@@ -330,33 +316,33 @@ namespace SpracheDown
                        select id).Named("closing tag for " + name);
         }
 
-        static readonly Parser<HTMLContent> Content =
+        static readonly Parser<HtmlValue> Content =
             from chars in Parse.CharExcept('<').Many()
-            select new HTMLContent(new string(chars.ToArray()));
+            select new HtmlValue(new string(chars.ToArray()));
 
-        static readonly Parser<HTMLNode> FullNode =
+        static readonly Parser<HtmlNode> FullNode =
             from tag in BeginTag
             from nodes in Parse.Ref(() => Item).Many()
             from end in EndTag(tag)
-            select new HTMLNode(tag, nodes);
+            select new HtmlNode(tag, nodes);
 
-        static readonly Parser<HTMLNode> ShortNode = Tag(from id in Identifier
+        static readonly Parser<HtmlNode> ShortNode = Tag(from id in Identifier
                                                          from slash in Parse.Char('/')
-                                                         select new HTMLNode(id));
+                                                         select new HtmlNode(id));
 
-        static readonly Parser<HTMLNode> HtmlNode = ShortNode.Or(FullNode);
+        static readonly Parser<HtmlNode> HtmlNode = ShortNode.Or(FullNode);
 
-        static readonly Parser<HTMLItem> Item = HtmlNode.Select(n => (HTMLItem)n).XOr(Content);
+        static readonly Parser<IHtmlItem> Item = HtmlNode.Select(n => (IHtmlItem)n).XOr(Content);
 
         /// <summary>
         /// Parses a single MarkDown term.
         /// </summary>
-        static readonly Parser<HTMLItem> MDTerm = Header.Or(MDList).Or(BlockQuote).Or(CodeBlock).Or(HtmlNode).Or(Paragraph);
+        static readonly Parser<IHtmlItem> MDTerm = Header.Or(MDList).Or(BlockQuote).Or(CodeBlock).Or(HtmlNode).Or(Paragraph);
 
         /// <summary>
         /// Parses a list of MarkDown terms, separated by two newlines each.
         /// </summary>
-        static readonly Parser<IEnumerable<HTMLItem>> TermList =
+        static readonly Parser<IEnumerable<IHtmlItem>> TermList =
             from first in Parse.WhiteSpace.Many().Optional()
             from terms in MDTerm.DelimitedBy(Parse.String("\r\n\r\n"))
             from rest in Parse.WhiteSpace.Many().Optional().End()
