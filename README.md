@@ -1,3 +1,7 @@
+---
+An edit to test PR decoration from sonarcloud
+---
+
 # SpracheDown [![Build Status](https://travis-ci.org/IanWold/SpracheDown.svg?branch=master)](https://travis-ci.org/IanWold/SpracheDown)
 
 SpracheDown is a MarkDown parser written in [Sprache](https://github.com/sprache/Sprache) for C#.
